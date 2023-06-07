@@ -1,0 +1,32 @@
+#main {
+	display: flex;
+	justify-content: center;
+}
+
+#controls {
+	font-family: Arial, Helvetica, sans-serif;
+	text-align: center;
+}
+
+#controls h1 {
+	margin-bottom: 10px;
+}
+
+#controls div {
+	padding-left: 10px;
+	padding-right: 10px;
+}
+
+#renderer {
+	display: grid;
+}
+
+#canvas {
+	grid-column: 1;
+	grid-row: 1;
+}
+
+#minimap {
+	grid-column: 1;
+	grid-row: 1;
+}

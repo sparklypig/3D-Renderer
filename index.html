@@ -5,13 +5,39 @@
 
 	<meta charset='utf-8'>
 	<meta http-equiv='X-UA-Compatible' content='IE=edge'>
-	<title>3D RendererS
-	</title>
+	<title>3D Renderer</title>
 	<meta name='viewport' content='width=device-width, initial-scale=1'>
+	<link rel="stylesheet" href="styles.css">
 </head>
 <body>
-	<canvas id="canvas"></canvas>
-	<canvas id="minimap"></canvas>
+	<div id="main">
+		<div id="renderer">
+			<canvas id="canvas"></canvas>
+			<canvas id="minimap"></canvas>
+		</div>
+		<div id="controls">
+			<h1>
+				Controls
+			</h1>
+
+			<div>
+				WASD to move
+			</div>
+			
+			<div>
+				Shift to go up
+			</div>
+			
+			<div>
+				Control to go down
+			</div>
+			
+			<div>
+				Arrow Keys to look
+			</div>
+		</div>
+	</div>
+
 	<script src="script.js"></script>
 </body>
 </html>

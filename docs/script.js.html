@@ -53,9 +53,10 @@ function background() {
 	// Set the transform to be centered on the middle of the screen
 	ctx.setTransform(1, 0, 0, -1, canvas.width / 2, canvas.height / 2)
 
-	// Reset the transform and draw a black background on the minimap
+	// Reset the transform and clear the background on the minimap
 	minictx.setTransform(1, 0, 0, 1, 0, 0)
-	minictx.fillStyle = 'black'
+	minictx.clearRect(0, 0, minimap.width, minimap.height)
+	minictx.fillStyle = '#00000022'
 	minictx.fillRect(0, 0, minimap.width, minimap.height)
 	// Set the transform to be centered on the middle of the minimap
 	minictx.setTransform(1, 0, 0, -1, minimap.width / 2, minimap.height / 2)
@@ -137,6 +138,7 @@ class Vector {
 	 */
 	assign(other) {
 		this.vector = [...other.vector]
+		return this
 	}
 
 	/**
@@ -231,23 +233,31 @@ class Vector {
 	}
 	
 	rotate(other, theta) {
-		this.assign(this.rotation(other, theta))
+		return this.assign(this.rotation(other, theta))
 	}
 
 	rotateX(theta) {
-		this.assign(this.rotateX(theta))
+		return this.assign(this.rotationX(theta))
 	}
 
 	rotateY(theta) {
-		this.assign(this.rotationY(theta))
+		return this.assign(this.rotationY(theta))
 	}
 
 	rotateZ(theta) {
-		this.assign(this.rotateZ(theta))
+		return this.assign(this.rotationZ(theta))
 	}
 
 	translate(other) {
 		this.assign(this.add(other))
+	}
+
+	transformation(matrix) {
+		return matrix.vector_product(this)
+	}
+
+	transform(matrix) {
+		this.assign(this.transformation(matrix))
 	}
 
 	/**
@@ -268,191 +278,22 @@ class Vector {
 }
 
 /**
- * Represents a 3-dimensional Vector
- * 
- * @property {Number} x The x component of the Vector
- * @property {Number} y The y component of the Vector
- * @property {Number} z The z component of the Vector
- * @extends {Vector}
- */
-class Vector3D extends Vector{
-	/**
-	 * Creates an instance of Vector3D.
-	 * @param {number} [x=0] The x component of the Vector3D
-	 * @param {number} [y=0] The y component of the Vector3D
-	 * @param {number} [z=0] The z component of the Vector3D
-	 */
-	constructor(x = 0, y = 0, z = 0) {
-		super([x, y, z])
-	}
-
-	get x() {
-		return this.vector[0]
-	}
-
-	set x(value) {
-		this.vector[0] = value
-	}
-
-	get y() {
-		return this.vector[1]
-	}
-
-	set y(value) {
-		this.vector[1] = value
-	}
-
-	get z() {
-		if(this.length &lt; 3) {
-			throw new Error("No z component, this vector is too small")
-		}
-		return this.vector[2]
-	}
-	
-	set z(value) {
-		if(this.length &lt; 3) {
-			throw new Error("No z component, this vector is too small")
-		}
-		this.vector[2] = value
-	}
-
-	/**
-	 * Creates an instance of Vector from a Vector3D
-	 *
-	 * @static
-	 * @param {Vector} vector A Vector to be converted to a Vector3D
-	 * @return {Vector3D} A Vector3D converted from a Vector
-	 */
-	static from_vector({vector:[x, y, z]}) {
-		return new Vector3D(x, y, z)
-	}
-
-	/**
-	 * Returns a new Vector3D that is this Vector3D scaled by k
-	 *
-	 * @param {Number} k Constant to scale this Vector3D by
-	 * @return {Vector3D} A new Vector3D contructed scaling this Vector3D by k 
-	 */
-	scale(k) {
-		return Vector3D.from_vector(super.scale(k))
-	}
-
-	/**
-	 * Adds this Vector3D to another Vector3D and returns a new Vector of their sum
-	 *
-	 * @param {Vector3D} other The Vector3D to add to this Vector3D
-	 * @return {Vector3D} The sum of the two Vector3Ds
-	 */
-	
-	add(other) {
-		return Vector3D.from_vector(super.add(other))
-	}
-
-	/**
-	 * Subtracts this Vector3D from another Vector3D and returns a new Vector3D of their difference
-	 *
-	 * @param {Vector3D} other The Vector3D to subtract from this Vector3D
-	 * @return {Vector3D} The difference of the two Vector3Ds
-	 */
-	sub(other) {
-		Vector3D.from_vector(super.sub(other))
-	}
-
-	normalized() {
-		return Vector3D.from_vector(super.normalized())
-	}
-
-	/**
-	 * Rotates this Vector3D around the x-axis and returns it as a new Vector3D
-	 *
-	 * @param {Number} theta The angle to rotate this Vector3D around the x-axis
-	 * @return {Vector3D} A new Vector3D contructed by rotating this Vector3D around the x-axis by theta
-	 */
-	rotationX(theta) {
-		const x = new Vector3D(1, 0, 0)
-		const y = new Vector3D(0, Math.cos(theta), Math.sin(theta))
-		const z = new Vector3D(0, -Math.sin(theta), Math.cos(theta))
-		return x.scale(this.x).add(y.scale(this.y)).add(z.scale(this.z))
-	}
-
-	/**
-	 * Rotates this Vector3D around the y-axis and returns it as a new Vector3D
-	 *
-	 * @param {Number} theta The angle to rotate this Vector3D around the y-axis
-	 * @return {Vector3D} A new Vector3D contructed by rotating this Vector3D around the y-axis by theta
-	 */
-	rotationY(theta) {
-		const x = new Vector3D(Math.cos(theta), 0, Math.sin(theta))
-		const y = new Vector3D(0, 1, 0)
-		const z = new Vector3D(-Math.sin(theta), 0, Math.cos(theta))
-		return x.scale(this.x).add(y.scale(this.y)).add(z.scale(this.z))
-	}
-
-	/**
-	 * Rotates this Vector3D around the z-axis and returns it as a new Vector3D
-	 *
-	 * @param {Number} theta The angle to rotate this Vector3D around the z-axis
-	 * @return {Vector3D} A new Vector3D contructed by rotating this Vector3D around the z-axis by theta
-	 */
-	rotationZ(theta) {
-		const x = new Vector3D(Math.cos(theta), Math.sin(theta), 0)
-		const y = new Vector3D(-Math.sin(theta), Math.cos(theta), 0)
-		const z = new Vector3D(0, 0, 1)
-		return x.scale(this.x).add(y.scale(this.y)).add(z.scale(this.z))
-	}
-
-	/**
-	 * 
-	 * @param {Vector3D} other 
-	 * @param {Number} theta 
-	 */
-	rotation(other, theta) { 
-		const q1 = Quaternion.from_vector3d(other.normalized(), theta / 2)
-		const p = Quaternion.from_vector3d(this)
-		const q2 = Quaternion.from_vector3d(other.normalized().scale(-1), theta / 2)
-
-		return q1
-		.mult(p)
-		.mult(q2)
-		.to_vector3d()
-	}
-	
-	/**
-	 * Rotates this Vector3D around the x-axis
-	*
-	* @param {*} theta Angle to rotate this Vector3D around the x-axis
-	*/
-	rotateX(theta) {
-		this.assign(this.rotationX(theta))
-	}
-	
-	/**
-	 * Rotates this Vector3D around the y-axis
-	*
-	* @param {*} theta Angle to rotate this Vector3D around the y-axis
-	*/
-	rotateY(theta) {
-		this.assign(this.rotationY(theta))
-	}
-	
-	/**
-	 * Rotates this Vector3D around the z-axis
-	*
-	* @param {*} theta Angle to rotate this Vector3D around the z-axis
-	*/
-	rotateZ(theta) {
-		this.assign(this.rotationZ(theta))
-	}
-
-	rotate(other, theta) {
-		this.assign(this.rotation(other, theta))
-	}
-}
-
-/**
  * Represents a general Matrix
  */
 class Matrix {
+	static identity(n) {
+		const vectors = []
+		for(let i = 0; i &lt; n; i++) {
+			const vector = []
+			for(let j = 0; j &lt; n; j++) {
+				vector.push(i === j ? 1 : 0)
+			}
+			vectors.push(vector)
+		}
+
+		return new Matrix(vectors)
+	}
+
 	/**
 	 * Creates an instance of Matrix.
 	 * @param {Vector[]} [vectors=[]] The Vectors that make up the Matrix
@@ -798,7 +639,7 @@ class Square_Matrix extends Matrix{
 /**
  * Represents a face
  * 
- * @property {Vector3D[]} points The points that make up the vertices of the face
+ * @property {Vector[]} points The points that make up the vertices of the face
  * @property {String} color The color of the face
  */
 class Face {
@@ -808,11 +649,14 @@ class Face {
 	 * @property {String} [color=null] The color of the face
 	 * @property {Vector} center The average of all points in the Face
 	 */
-	constructor(points, color = null) {
+	constructor(points, fill = null, stroke = null) {
 		this.points = points
 
-		this.color = color
-		this.color ??= 'red'
+		this.fill = fill
+		this.fill ??= 'red'
+
+		this.stroke = stroke
+		this.stroke ??= '#00000044'
 
 		this.find_center()
 	}
@@ -898,15 +742,31 @@ class Face {
 		this.translate(original_center)
 	}
 
+	transform(matrix) {
+		const original_center = this.center
+		this.translate(original_center.scale(-1))
+		for(const point of this.points) {
+			point.transform(matrix)
+		}
+		this.translate(original_center)
+		
+		this.find_center()
+	}
+
 	/**
 	 * Finds the average of all points in the Face and stores it in this.center
 	 *
 	 */
 	find_center() {
+		console.log("find center")
 		this.center = this.points.reduce((acc, point) => {
 			return acc.add(point)
 		}, new Vector([0, 0, 0]))
 		.scale(1 / this.points.length)
+	}
+
+	copy() {
+		return new Face(this.points.map(point => point.scale(1)), this.fill, this.stroke)
 	}
 
 	/**
@@ -915,7 +775,8 @@ class Face {
 	 * @param {Camera} camera The Camera to render this face on
 	 */
 	render(camera) {
-		ctx.fillStyle = this.color
+		ctx.fillStyle = this.fill
+		ctx.strokeStyle = this.stroke
 
 		ctx.beginPath()
 
@@ -927,6 +788,7 @@ class Face {
 			
 			ctx.lineTo(x, y)
 		}
+		ctx.stroke()
 		ctx.fill()
 	}
 }
@@ -944,8 +806,8 @@ class Object {
 
 		// Orientation
 		this.right = new Vector([1, 0, 0])
-		this.up = new Vector([0, 1, 0])
-		this.forward = new Vector([0, 0, 1])
+		this.forward = new Vector([0, 1, 0])
+		this.up = new Vector([0, 0, 1])
 	}
 
 	/**
@@ -964,8 +826,8 @@ class Object {
 	 */
 	rotateX(theta) {
 		this.right.rotateX(theta)
-		this.up.rotateX(theta)
 		this.forward.rotateX(theta)
+		this.up.rotateX(theta)
 	}
 	
 	/**
@@ -975,8 +837,8 @@ class Object {
 	 */
 	rotateY(theta) {
 		this.right.rotateY(theta)
-		this.up.rotateY(theta)
 		this.forward.rotateY(theta)
+		this.up.rotateY(theta)
 	}
 
 	/**
@@ -986,14 +848,14 @@ class Object {
 	 */
 	rotateZ(theta) {
 		this.right.rotateZ(theta)
-		this.up.rotateZ(theta)
 		this.forward.rotateZ(theta)
+		this.up.rotateZ(theta)
 	}
 
 	rotate(vector, theta) {
 		this.right.rotate(vector, theta)
-		this.up.rotate(vector, theta)
 		this.forward.rotate(vector, theta)
+		this.up.rotate(vector, theta)
 	}
 }
 
@@ -1072,7 +934,7 @@ class Renderable_Object extends Object{
 		this.faces.sort((a, b) => {
 			const da = camera.delta(a.center)
 			const db = camera.delta(b.center)
-			return db.length() - da.length()
+			return db.z - da.z
 		})
 	}
 
@@ -1218,28 +1080,119 @@ class Renderable_Object extends Object{
 	}
 }
 
+class Rectangle extends Face {
+	constructor(width = 1, length = 1, fill = null, stroke = null) {
+		super([
+			new Vector([1, 1, 0]),
+			new Vector([-1, 1, 0]),
+			new Vector([-1, -1, 0]),
+			new Vector([1, -1, 0]),
+		], fill, stroke)
+
+		this.transform(new Matrix([
+			new Vector([width, 0, 0]),
+			new Vector([0, length, 0]),
+			new Vector([0, 0, 1]),
+		]))
+	}
+}
+
 /**
  * Represents a Square
  *
  * @extends {Renderable_Object}
  */
-class Square extends Renderable_Object{
+class Square extends Rectangle {
 	/**
 	 * Creates an instance of Square.
 	 * @param {number} [size=1] The size of the Square
 	 * @param {string} [color='red'] The color of the Square
 	 */
 	constructor(size = 1, color = 'red') {
+		super(size, size, color)
+	}
+}
+
+class Circle extends Face {
+	constructor(radius, n = 10, fill = null, stroke = null) {
+		super([...Array(n)]
+			.map((_, i) => {
+				const angle = Math.PI * 2 * i / n
+				return new Vector([Math.cos(angle), Math.sin(angle), 0])
+			}),
+			fill, stroke
+		)
+
+		this.scale(radius)
+	}
+}
+
+class Prism extends Renderable_Object {
+	/**
+	 * 
+	 * @param {Face} face 
+	 * @param {Number} height 
+	 */
+	constructor(face, height = 1) {
 		super()
 
-		this.faces.push(new Face([
-			new Vector([1, 1, 0]),
-			new Vector([-1, 1, 0]),
-			new Vector([-1, -1, 0]),
-			new Vector([1, -1, 0]),
-		], color))
+		const top = face.copy()
+		top.translate(new Vector([0, 0, height]))
+		top.name = "top"
+		this.faces.push(top)
 
-		this.scale(size)
+		const bottom = face.copy()
+		bottom.translate(new Vector([0, 0, -height]))
+		top.bottom = "bottom"
+		this.faces.push(bottom)
+
+		const top_pairs = [...top.points.slice(1), top.points[0]].map((point, i) => [top.points[i], point])
+		const bottom_pairs = [...bottom.points.slice(1), bottom.points[0]].map((point, i) => [bottom.points[i], point])
+		const sides = top_pairs.map((points, i) => [...points, ...bottom_pairs[i].reverse()])
+
+		sides.forEach(side => {
+			this.faces.push(new Face(side, face.fill, face.stroke))
+		})
+
+	}
+}
+
+class Rectanglular_Prism extends Prism {
+	constructor(width = 1, length = 1, height = 1) {
+		super(new Rectangle(width, length), height)
+	}
+}
+
+class Cylinder extends Prism {
+	constructor(radius = 1, height = 1, n = 10) {
+		super(new Circle(radius, n), height)
+	}
+}
+
+class Sphere extends Renderable_Object {
+	constructor(radius = 1, n = 10) {
+		super()
+
+		for(let i = 0; i &lt; n; i++) {
+			const longitude = Math.PI * 2 * i / n
+			const _longitude = Math.PI * 2 * (i + 1) / n
+
+			for(let j = 0; j &lt; n / 2; j++) {
+				const latitude = (-Math.PI / 2) + (Math.PI * 2 * j / n)
+				const _latitude = (-Math.PI / 2) + (Math.PI * 2 * (j + 1) / n)
+
+				const face = new Face([
+					new Vector([1, 0, 0]).rotateY(latitude).rotateZ(longitude),
+					new Vector([1, 0, 0]).rotateY(_latitude).rotateZ(longitude),
+					new Vector([1, 0, 0]).rotateY(_latitude).rotateZ(_longitude),
+					new Vector([1, 0, 0]).rotateY(latitude).rotateZ(_longitude),
+				])
+
+				this.faces.push(face)
+			}
+		}
+
+		this.scale(radius)
 	}
 }
 
@@ -1248,7 +1201,7 @@ class Square extends Renderable_Object{
  *
  * @extends {Renderable_Object}
  */
-class Cube extends Renderable_Object{
+class Cube extends Renderable_Object {
 	/**
 	 * Creates an instance of Cube.
 	 * @param {number} [size=1] The size of the Cube
@@ -1258,33 +1211,34 @@ class Cube extends Renderable_Object{
 
 		const front = new Square(1, '#ff0000')
 		front.translate(this.forward.scale(1))
-		this.children.push(front)
+		front.rotateX(Math.PI / 2)
+		this.faces.push(front)
 		front.name = 'front'
 
 		const top = new Square(1, '#00ff00')
 		top.translate(this.up.scale(1))
-		top.rotateX(Math.PI / 2)
-		this.children.push(top)
+		// top.rotateX(Math.PI / 2)
+		this.faces.push(top)
 
 		const right = new Square(1, '#0000ff')
 		right.translate(this.right.scale(1))
 		right.rotateY(Math.PI / 2)
-		this.children.push(right)
+		this.faces.push(right)
 
 		const back = new Square(1, '#880000')
 		back.translate(this.forward.scale(-1))
-		this.children.push(back)
+		back.rotateX(Math.PI / 2)
+		this.faces.push(back)
 		back.name = 'back'
 
 		const bottom = new Square(1, '#008800')
 		bottom.translate(this.up.scale(-1))
-		bottom.rotateX(Math.PI / 2)
-		this.children.push(bottom)
+		this.faces.push(bottom)
 
 		const left = new Square(1, '#000088')
 		left.translate(this.right.scale(-1))
 		left.rotateY(Math.PI / 2)
-		this.children.push(left)
+		this.faces.push(left)
 
 		this.scale(size)
 	}
@@ -1303,6 +1257,7 @@ class Camera extends Object{
 		super()
 
 		this.center = new Vector([0, 0, 0])
+		this.sun = new Vector([0, 1000, 0])
 		this.view_angle = Math.PI / 4
 		this.minimum_distace = 1
 
@@ -1366,10 +1321,20 @@ class Controller {
 	constructor() {
 		window.addEventListener('keydown', (event) => {
 			this[event.code] = true
+			event.preventDefault()
 		})
 		window.addEventListener('keyup', (event) => {
 			this[event.code] = false
+			event.preventDefault()
 		})
+
+		window.onbeforeunload = function (e) {
+			// Cancel the event
+			e.preventDefault();
+		
+			// Chrome requires returnValue to be set
+			e.returnValue = 'Really want to quit the game?';
+		};
 	}
 
 	/**
@@ -1402,12 +1367,12 @@ class Controller {
 	
 		// Move the Camera down
 		if(this.ControlLeft) {
-			camera.translate(new Vector([0, 1, 0]).scale(-1).scale(dt * 0.01))
+			camera.translate(new Vector([0, 0, 1]).scale(-1).scale(dt * 0.01))
 		}
 	
 		// Move the Camera up
 		if(this.ShiftLeft) {
-			camera.translate(new Vector([0, 1, 0]).scale(dt * 0.01))
+			camera.translate(new Vector([0, 0, 1]).scale(dt * 0.01))
 		}
 		
 		// Move the Camera left
@@ -1440,22 +1405,22 @@ class Controller {
 	
 		// Rotate the Camera up
 		if(this.ArrowUp) {
-			camera.rotate(camera.right, -dt * 0.005)
+			camera.rotate(camera.right, dt * 0.005)
 		}
 	
 		// Rotate the Camera down
 		if(this.ArrowDown) {
-			camera.rotate(camera.right, dt * 0.005)
+			camera.rotate(camera.right, -dt * 0.005)
 		}
 	
 		// Rotate the Camera right
 		if(this.ArrowRight) {
-			camera.rotateY(dt * 0.005)
+			camera.rotateZ(-dt * 0.005)
 		}
 	
 		// Rotate the Camera left
 		if(this.ArrowLeft) {
-			camera.rotateY(-dt * 0.005)
+			camera.rotateZ(dt * 0.005)
 		}
 	}
 }
@@ -1463,27 +1428,22 @@ class Controller {
 let last
 
 const camera = new Camera()
-// const face = new Face([
-// 	new Vector3D(1, 1, 0),
-// 	new Vector3D(-1, 1, 0),
-// 	new Vector3D(-1, -1, 0),
-// 	new Vector3D(1, -1, 0),
-// ], 'red')
-// camera.objects.push(face)
+camera.translate(new Vector([5, 0, 0]))
+camera.translate(camera.forward.scale(-10))
 
 const cube = new Cube(2)
 
 const cube2 = new Cube(0.2)
-camera.objects.push(cube)
-
 cube2.translate(new Vector([5, 0, 0]))
-camera.translate(new Vector([5, 0, 0]))
-camera.translate(camera.forward.scale(-10))
 
-// Vector.from_vector3d(cube2.center).display()
-// Vector.from_vector3d(camera.center).display()
-// Vector.from_vector3d(camera.delta(cube2.center)).display()
+// const rect = new Rectanglular_Prism(2, 3, 4)
+const cylinder = new Cylinder(2, 5, 30)
+const sphere = new Sphere(2, 40)
+
+camera.objects.push(cube)
 camera.objects.push(cube2)
+// camera.objects.push(cylinder)
+// camera.objects.push(sphere)
 
 const controller = new Controller()
 
@@ -1497,7 +1457,7 @@ function draw(timestamp) {
 	const dt = timestamp - last
 	last = timestamp
 	background()
-	
+
 	controller.poll(dt)
 	
 	camera.render()
@@ -1505,12 +1465,12 @@ function draw(timestamp) {
 
 	// Vector.from_vector3d(camera.center).display()
 	minictx.save()
-	minictx.translate(camera.center.x, camera.center.z)
+	minictx.translate(camera.center.x, camera.center.y)
 	minictx.scale(10, 10)
 	minictx.fillStyle = 'red'
 	minictx.fillRect(-0.25, -0.25, 0.5, 0.5)
 
-	minictx.translate(camera.forward.x, camera.forward.z)
+	minictx.translate(camera.forward.x, camera.forward.y)
 	minictx.fillStyle = 'blue'
 	minictx.fillRect(-0.25, -0.25, 0.5, 0.5)
 	minictx.restore()
@@ -1545,13 +1505,13 @@ window.requestAnimationFrame(draw)</code></pre>
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Camera.html">Camera</a></li><li><a href="Controller.html">Controller</a></li><li><a href="Cube.html">Cube</a></li><li><a href="Face.html">Face</a></li><li><a href="Matrix.html">Matrix</a></li><li><a href="Object.html">Object</a></li><li><a href="Quaternion.html">Quaternion</a></li><li><a href="Renderable_Object.html">Renderable_Object</a></li><li><a href="Square.html">Square</a></li><li><a href="Square_Matrix.html">Square_Matrix</a></li><li><a href="Vector.html">Vector</a></li><li><a href="Vector3D.html">Vector3D</a></li></ul><h3>Global</h3><ul><li><a href="global.html#background">background</a></li><li><a href="global.html#draw">draw</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Camera.html">Camera</a></li><li><a href="Controller.html">Controller</a></li><li><a href="Cube.html">Cube</a></li><li><a href="Face.html">Face</a></li><li><a href="Matrix.html">Matrix</a></li><li><a href="Object.html">Object</a></li><li><a href="Prism.html">Prism</a></li><li><a href="Quaternion.html">Quaternion</a></li><li><a href="Renderable_Object.html">Renderable_Object</a></li><li><a href="Square.html">Square</a></li><li><a href="Square_Matrix.html">Square_Matrix</a></li><li><a href="Vector.html">Vector</a></li></ul><h3>Global</h3><ul><li><a href="global.html#background">background</a></li><li><a href="global.html#draw">draw</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.11</a> on Wed Dec 28 2022 11:47:09 GMT-0500 (Eastern Standard Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.11</a> on Wed Jun 07 2023 15:35:22 GMT-0400 (Eastern Daylight Time)
 </footer>
 
 <script> prettyPrint(); </script>
